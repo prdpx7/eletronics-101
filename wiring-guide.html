@@ -179,6 +179,116 @@
   <p>Phase 1 -- Left-side motors (Channel A only) via TB6612FNG + ESP32</p>
 </header>
 
+<!-- ========== PRIMER ========== -->
+<section>
+  <h2>How It All Works</h2>
+  <p style="color:#888;font-size:13px;margin-bottom:24px">Read this once before touching any wires. It makes every connection below feel obvious rather than arbitrary.</p>
+
+  <!-- The cast -->
+  <h3 style="color:#aaa;font-size:14px;margin:0 0 14px;border:0;padding:0">The three pieces of hardware</h3>
+
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px">
+
+    <div class="info">
+      <strong style="color:#fff">ESP32</strong> — the brain.<br>
+      <span style="color:#888;font-size:13px">A microcontroller you write code on. It runs your program, decides which direction each wheel spins, and how fast. It speaks in digital signals: a pin is either HIGH (3.3V) or LOW (0V). It cannot directly power a motor — it can only give <em>instructions</em>.</span>
+    </div>
+
+    <div class="info">
+      <strong style="color:#fff">TB6612FNG</strong> — the muscle.<br>
+      <span style="color:#888;font-size:13px">A motor driver chip. It sits between the ESP32 and the motors. It listens to the ESP32's low-current logic signals and uses them to switch the high-current battery power to the motor terminals. Think of it as a relay: a tiny signal flips a big switch.</span>
+    </div>
+
+    <div class="info">
+      <strong style="color:#fff">2× 18650 battery (7.4–8.4V)</strong> — the muscle fuel.<br>
+      <span style="color:#888;font-size:13px">Powers the motors through the TB6612FNG. Also feeds a buck converter that steps 8.4V down to a safe 5V for the ESP32. The ESP32 then steps that 5V down to 3.3V for its own logic. One battery pack, three voltage levels.</span>
+    </div>
+
+  </div>
+
+  <!-- Channel A/B -->
+  <h3 style="color:#aaa;font-size:14px;margin:0 0 14px;border:0;padding:0">Channels A and B</h3>
+  <p style="color:#888;font-size:13px;margin-bottom:16px">The TB6612FNG has two independent half-H-bridge channels. Each channel is a completely separate motor circuit. Channel A drives the left wheels; Channel B drives the right wheels. They share power (VM, VCC, GND) but have their own control pins and output pins.</p>
+
+  <!-- Pin glossary -->
+  <h3 style="color:#aaa;font-size:14px;margin:0 0 14px;border:0;padding:0">What each TB6612FNG pin actually does</h3>
+
+  <table style="margin-bottom:28px">
+    <tr><th>Pin</th><th>Direction</th><th>What it does</th></tr>
+    <tr>
+      <td><code>VCC</code></td>
+      <td style="color:#666;font-size:12px">input</td>
+      <td>Powers the chip's internal logic (2.7–5.5V). Comes from ESP32's 3.3V pin. Without this, the chip won't listen to any signals.</td>
+    </tr>
+    <tr>
+      <td><code>VM</code></td>
+      <td style="color:#666;font-size:12px">input</td>
+      <td>Motor supply voltage (up to 15V). Raw battery power goes here. This is the energy source that actually spins the motors. Completely separate from VCC.</td>
+    </tr>
+    <tr>
+      <td><code>GND</code></td>
+      <td style="color:#666;font-size:12px">both</td>
+      <td>Common ground. Must be shared between ESP32, TB6612FNG, and the battery minus terminal. Without a shared ground, voltage levels mean nothing — signals float randomly.</td>
+    </tr>
+    <tr>
+      <td><code style="color:#3498db">AIN1</code> / <code style="color:#ecf0f1">BIN1</code></td>
+      <td style="color:#666;font-size:12px">input</td>
+      <td>Direction bit 1 for channel A / B. HIGH or LOW. Set by the ESP32 GPIO.</td>
+    </tr>
+    <tr>
+      <td><code style="color:#2ecc71">AIN2</code> / <code style="color:#fdcb6e">BIN2</code></td>
+      <td style="color:#666;font-size:12px">input</td>
+      <td>Direction bit 2 for channel A / B. AIN1 and AIN2 together form a 2-bit command: forward, backward, brake, or coast. See the direction table below.</td>
+    </tr>
+    <tr>
+      <td><code style="color:#9b59b6">PWMA</code> / <code style="color:#e17055">PWMB</code></td>
+      <td style="color:#666;font-size:12px">input</td>
+      <td>Speed control for channel A / B. A PWM signal from the ESP32. While AIN1/AIN2 decide <em>direction</em>, PWMA controls <em>how much</em> of the battery voltage reaches the motor on each cycle. PWM = 0 means the motor gets nothing even if direction pins say forward. PWM = 255 means full voltage, full speed.</td>
+    </tr>
+    <tr>
+      <td><code style="color:#f1c40f">AO1</code> / <code style="color:#00b894">BO1</code></td>
+      <td style="color:#666;font-size:12px">output</td>
+      <td>Motor terminal 1 for channel A / B. Connects to one wire of the motor. Voltage swings between 0V and VM (~8.4V) depending on direction.</td>
+    </tr>
+    <tr>
+      <td><code style="color:#95a5a6">AO2</code> / <code style="color:#555;font-style:italic">BO2</code></td>
+      <td style="color:#666;font-size:12px">output</td>
+      <td>Motor terminal 2 for channel A / B. The motor spins because there is a voltage <em>difference</em> between AO1 and AO2. Reverse which one is high and the motor reverses.</td>
+    </tr>
+  </table>
+
+  <!-- PWM explainer -->
+  <h3 style="color:#aaa;font-size:14px;margin:0 0 14px;border:0;padding:0">How PWM controls speed</h3>
+
+  <div class="info" style="margin-bottom:10px">
+    <strong>PWM = Pulse Width Modulation.</strong>
+    <span style="color:#888;font-size:13px"> Instead of a steady voltage, the ESP32 pulses the PWMA pin on and off thousands of times per second. The motor sees the <em>average</em> voltage. If the pin is HIGH 50% of the time (duty cycle 50%), the motor behaves as if it got half the supply voltage — half speed. If HIGH 100% of the time, full speed. If HIGH 0% of the time, stopped.</span>
+  </div>
+
+  <div style="background:#111122;border:1px solid #222238;border-radius:10px;padding:20px 16px;margin-bottom:10px;font-family:'SF Mono','Fira Code',monospace;font-size:12px;color:#555;overflow-x:auto">
+    <div style="margin-bottom:6px;color:#444;font-family:system-ui;font-size:11px;text-transform:uppercase;letter-spacing:0.5px">PWM duty cycle → motor behavior</div>
+    <div><span style="color:#888">PWM 0   (0%)  </span>  <span style="color:#e74c3c">▂</span><span style="color:#2a2a3a">▇▇▇▇▇▇▇▇▇</span>  stopped — PWMA stays LOW, chip disables output</div>
+    <div><span style="color:#888">PWM 64  (25%) </span>  <span style="color:#9b59b6">▇▇</span><span style="color:#2a2a3a">▇▇▇▇▇▇▇▇</span>  slow</div>
+    <div><span style="color:#888">PWM 128 (50%) </span>  <span style="color:#9b59b6">▇▇▇▇▇</span><span style="color:#2a2a3a">▇▇▇▇▇</span>  medium speed</div>
+    <div><span style="color:#888">PWM 192 (75%) </span>  <span style="color:#9b59b6">▇▇▇▇▇▇▇▇</span><span style="color:#2a2a3a">▇▇</span>  fast</div>
+    <div><span style="color:#888">PWM 255 (100%)</span>  <span style="color:#9b59b6">▇▇▇▇▇▇▇▇▇▇</span>  full speed — PWMA is always HIGH</div>
+  </div>
+
+  <!-- Power flow -->
+  <h3 style="color:#aaa;font-size:14px;margin:20px 0 14px;border:0;padding:0">Power flow: how voltage gets from battery to spinning wheels</h3>
+
+  <div style="background:#111122;border:1px solid #222238;border-radius:10px;padding:20px 16px;margin-bottom:10px;font-size:13px;color:#888;line-height:2">
+    <div><span style="color:#e74c3c">Battery 8.4V (+)</span> ──► <span style="color:#e74c3c">TB6612FNG VM</span> ──► (chip switches this to motor terminals based on AIN1/AIN2/PWMA) ──► <span style="color:#f1c40f">AO1</span> / <span style="color:#95a5a6">AO2</span> ──► <span style="color:#fff">motor spins</span></div>
+    <div><span style="color:#e74c3c">Battery 8.4V (+)</span> ──► <span style="color:#d35400">Buck converter</span> ──► <span style="color:#d35400">5V</span> ──► <span style="color:#d35400">ESP32 VIN</span> ──► <span style="color:#e67e22">ESP32 3V3 pin</span> ──► <span style="color:#e67e22">TB6612FNG VCC</span> (logic only)</div>
+    <div><span style="color:#555">Battery GND (−)</span> ──► <span style="color:#555">TB6612FNG GND</span> ◄── <span style="color:#555">ESP32 GND</span> (all grounds tied together)</div>
+  </div>
+
+  <div class="warn">
+    <strong>The most common beginner mistake:</strong> missing shared ground. If the ESP32 GND and the battery minus are not connected through the same TB6612FNG GND pin, the ESP32's HIGH/LOW signals have no reference point — the motor driver literally can't interpret them. Wire ground first, always.
+  </div>
+
+</section>
+
 <!-- ========== SCHEMATIC ========== -->
 <section>
   <h2>Schematic</h2>

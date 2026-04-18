@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>4WD Car</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: #0a0a14;
+    color: #c0c0c8;
+    font-family: -apple-system, system-ui, sans-serif;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: #0e0e1a;
+    border-bottom: 1px solid #1a1a2a;
+  }
+  .header h1 { font-size: 18px; color: #fff; font-weight: 700; }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #666;
+  }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #e74c3c;
+    transition: background 0.3s;
+  }
+  .status-dot.ok { background: #2ecc71; }
+
+  .speed-bar {
+    padding: 14px 20px;
+    background: #0e0e1a;
+    border-bottom: 1px solid #1a1a2a;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .speed-bar label {
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    min-width: 50px;
+  }
+  .speed-bar input[type="range"] {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    background: #1a1a2a;
+    border-radius: 3px;
+    outline: none;
+  }
+  .speed-bar input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 24px; height: 24px;
+    background: #3498db;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  .speed-val {
+    font-family: 'SF Mono', monospace;
+    font-size: 14px;
+    color: #fff;
+    min-width: 30px;
+    text-align: right;
+  }
+
+  .controls {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .dpad {
+    display: grid;
+    grid-template-columns: 90px 90px 90px;
+    grid-template-rows: 90px 90px 90px;
+    gap: 8px;
+  }
+
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    border: 1px solid #1e1e30;
+    border-radius: 12px;
+    background: #121220;
+    color: #777;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.1s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn .arrow {
+    font-size: 24px;
+    line-height: 1;
+    margin-bottom: 4px;
+    color: #555;
+    transition: color 0.1s;
+  }
+  .btn:active, .btn.active {
+    transform: scale(0.95);
+  }
+
+  .btn-fwd { grid-column: 2; grid-row: 1; }
+  .btn-fwd.active {
+    background: #0a2a1a;
+    border-color: #2ecc71;
+    color: #2ecc71;
+  }
+  .btn-fwd.active .arrow { color: #2ecc71; }
+
+  .btn-back { grid-column: 2; grid-row: 3; }
+  .btn-back.active {
+    background: #0a1a2a;
+    border-color: #3498db;
+    color: #3498db;
+  }
+  .btn-back.active .arrow { color: #3498db; }
+
+  .btn-left { grid-column: 1; grid-row: 2; }
+  .btn-left.active {
+    background: #1a1a0a;
+    border-color: #f39c12;
+    color: #f39c12;
+  }
+  .btn-left.active .arrow { color: #f39c12; }
+
+  .btn-right { grid-column: 3; grid-row: 2; }
+  .btn-right.active {
+    background: #1a1a0a;
+    border-color: #f39c12;
+    color: #f39c12;
+  }
+  .btn-right.active .arrow { color: #f39c12; }
+
+  .btn-stop {
+    grid-column: 2; grid-row: 2;
+    background: #1a1010;
+    border-color: #3a2020;
+    color: #888;
+    font-size: 10px;
+  }
+  .btn-stop .arrow { font-size: 18px; color: #e74c3c; }
+  .btn-stop:active {
+    background: #2a1515;
+    border-color: #e74c3c;
+  }
+
+  .e-stop {
+    margin: 0 20px 20px;
+    padding: 16px;
+    background: #1a0a0a;
+    border: 2px solid #3d1515;
+    border-radius: 12px;
+    color: #e74c3c;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.1s;
+  }
+  .e-stop:active {
+    background: #2d0a0a;
+    border-color: #e74c3c;
+    transform: scale(0.98);
+  }
+
+  .action-label {
+    padding: 8px 20px;
+    text-align: center;
+    font-size: 13px;
+    color: #333;
+    font-family: 'SF Mono', monospace;
+    min-height: 34px;
+  }
+  .action-label.active { color: #2ecc71; }
+
+  .keyboard-hint {
+    text-align: center;
+    padding: 0 20px 12px;
+    font-size: 11px;
+    color: #333;
+  }
+
+  @media (min-width: 500px) {
+    .dpad {
+      grid-template-columns: 110px 110px 110px;
+      grid-template-rows: 110px 110px 110px;
+      gap: 10px;
+    }
+    .btn { font-size: 12px; border-radius: 14px; }
+    .btn .arrow { font-size: 28px; }
+  }
+
+  @media (min-height: 800px) {
+    .controls { padding: 30px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>4WD Car</h1>
+  <div class="status">
+    <span class="status-dot" id="statusDot"></span>
+    <span id="statusText">connecting...</span>
+  </div>
+</div>
+
+<div class="speed-bar">
+  <label>Speed</label>
+  <input type="range" id="speed" min="80" max="255" value="200">
+  <span class="speed-val" id="speedVal">200</span>
+</div>
+
+<div class="action-label" id="actionLabel"></div>
+
+<div class="controls">
+  <div class="dpad">
+    <div class="btn btn-fwd" data-action="forward">
+      <span class="arrow">&#9650;</span>FWD
+    </div>
+    <div class="btn btn-left" data-action="left">
+      <span class="arrow">&#9664;</span>LEFT
+    </div>
+    <div class="btn btn-stop" data-action="stop">
+      <span class="arrow">&#9632;</span>STOP
+    </div>
+    <div class="btn btn-right" data-action="right">
+      <span class="arrow">&#9654;</span>RIGHT
+    </div>
+    <div class="btn btn-back" data-action="backward">
+      <span class="arrow">&#9660;</span>BACK
+    </div>
+  </div>
+</div>
+
+<div class="e-stop" id="estop">Emergency Stop</div>
+
+<div class="keyboard-hint">Keyboard: arrow keys or W/A/S/D, space = stop</div>
+
+<script>
+(function() {
+  var API = '/api';
+  var activeBtn = null;
+  var heartbeatId = null;
+  var statusInterval = null;
+  var speedEl = document.getElementById('speed');
+  var speedValEl = document.getElementById('speedVal');
+  var actionLabel = document.getElementById('actionLabel');
+  var statusDot = document.getElementById('statusDot');
+  var statusText = document.getElementById('statusText');
+
+  function getSpeed() {
+    return speedEl.value;
+  }
+
+  speedEl.addEventListener('input', function() {
+    speedValEl.textContent = this.value;
+  });
+
+  function sendCmd(action) {
+    var url = API + '/drive?action=' + action + '&speed=' + getSpeed();
+    fetch(url).catch(function() {});
+  }
+
+  function startDrive(action, btn) {
+    if (activeBtn === btn) return;
+    stopDrive();
+
+    activeBtn = btn;
+    btn.classList.add('active');
+    actionLabel.textContent = action.toUpperCase();
+    actionLabel.classList.add('active');
+
+    sendCmd(action);
+
+    heartbeatId = setInterval(function() {
+      sendCmd(action);
+    }, 300);
+  }
+
+  function stopDrive() {
+    if (heartbeatId) {
+      clearInterval(heartbeatId);
+      heartbeatId = null;
+    }
+    if (activeBtn) {
+      activeBtn.classList.remove('active');
+      activeBtn = null;
+    }
+    actionLabel.textContent = '';
+    actionLabel.classList.remove('active');
+    sendCmd('stop');
+  }
+
+  var buttons = document.querySelectorAll('.btn[data-action]');
+  buttons.forEach(function(btn) {
+    var action = btn.dataset.action;
+
+    if (action === 'stop') {
+      btn.addEventListener('touchstart', function(e) { e.preventDefault(); stopDrive(); });
+      btn.addEventListener('mousedown', function(e) { e.preventDefault(); stopDrive(); });
+      return;
+    }
+
+    btn.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      startDrive(action, btn);
+    });
+    btn.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      stopDrive();
+    });
+    btn.addEventListener('touchcancel', function(e) {
+      e.preventDefault();
+      stopDrive();
+    });
+    btn.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+      startDrive(action, btn);
+    });
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (activeBtn) stopDrive();
+  });
+
+  document.getElementById('estop').addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    stopDrive();
+    fetch(API + '/stop').catch(function() {});
+  });
+  document.getElementById('estop').addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    stopDrive();
+    fetch(API + '/stop').catch(function() {});
+  });
+
+  var keyMap = {
+    ArrowUp: 'forward', ArrowDown: 'backward', ArrowLeft: 'left', ArrowRight: 'right',
+    w: 'forward', s: 'backward', a: 'left', d: 'right',
+    W: 'forward', S: 'backward', A: 'left', D: 'right'
+  };
+  var activeKeys = {};
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === ' ' || e.key === 'Escape') {
+      e.preventDefault();
+      stopDrive();
+      return;
+    }
+    var action = keyMap[e.key];
+    if (!action || activeKeys[e.key]) return;
+    e.preventDefault();
+    activeKeys[e.key] = true;
+
+    var btn = document.querySelector('[data-action="' + action + '"]');
+    if (btn) startDrive(action, btn);
+  });
+
+  document.addEventListener('keyup', function(e) {
+    if (activeKeys[e.key]) {
+      delete activeKeys[e.key];
+      if (Object.keys(activeKeys).length === 0) stopDrive();
+    }
+  });
+
+  function checkStatus() {
+    fetch(API + '/status')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        statusDot.classList.add('ok');
+        statusText.textContent = 'connected';
+      })
+      .catch(function() {
+        statusDot.classList.remove('ok');
+        statusText.textContent = 'disconnected';
+      });
+  }
+
+  checkStatus();
+  statusInterval = setInterval(checkStatus, 3000);
+})();
+</script>
+
+</body>
+</html>

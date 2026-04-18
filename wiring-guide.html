@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4WD Car Wiring Guide - Phase 1</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0d0d1a;
+    color: #c8c8d0;
+    font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    padding: 32px 24px;
+    max-width: 1060px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  header { margin-bottom: 40px; }
+  header h1 { color: #fff; font-size: 26px; margin-bottom: 4px; }
+  header p { color: #666; font-size: 15px; }
+
+  section { margin-bottom: 48px; }
+  h2 {
+    color: #fff;
+    font-size: 18px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #1e1e30;
+  }
+
+  .diagram-wrap {
+    background: #111122;
+    border: 1px solid #222238;
+    border-radius: 10px;
+    padding: 20px 12px;
+    overflow-x: auto;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 24px;
+    margin-top: 16px;
+    font-size: 13px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .ldot {
+    width: 10px; height: 10px; border-radius: 50%;
+    display: inline-block; flex-shrink: 0;
+  }
+
+  /* pin map */
+  .pinmap {
+    background: #111122;
+    border: 1px solid #222238;
+    border-radius: 10px;
+    padding: 24px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 2;
+    overflow-x: auto;
+    white-space: pre;
+    color: #888;
+  }
+  .pinmap .active { color: #fff; font-weight: 600; }
+  .pinmap .dim { color: #444; }
+  .pinmap .trench { color: #333; }
+  .pinmap .hint { color: #555; font-size: 11px; }
+
+  /* tables */
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #555;
+    background: #111122;
+    border-bottom: 1px solid #222238;
+  }
+  td {
+    padding: 9px 12px;
+    font-size: 14px;
+    border-bottom: 1px solid #161625;
+  }
+  tr:hover td { background: #13132088; }
+  td code {
+    background: #1a1a2e;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 13px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+  .cdot {
+    width: 10px; height: 10px; border-radius: 50%;
+    display: inline-block; vertical-align: middle;
+    margin-right: 6px;
+  }
+
+  /* wiring steps */
+  .step {
+    display: flex;
+    gap: 14px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    background: #111122;
+    border-radius: 8px;
+    border-left: 4px solid;
+    font-size: 14px;
+  }
+  .step-n {
+    font-weight: 700;
+    font-size: 16px;
+    color: #fff;
+    min-width: 22px;
+  }
+  .step-wire {
+    font-family: 'SF Mono', monospace;
+    font-size: 12px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-left: 6px;
+  }
+
+  /* truth table */
+  .tt td { text-align: center; font-family: 'SF Mono', monospace; font-size: 13px; }
+  .tt td:last-child { text-align: left; font-family: -apple-system, sans-serif; }
+  .hi { color: #2ecc71; font-weight: 600; }
+  .lo { color: #555; }
+  .pw { color: #9b59b6; font-weight: 600; }
+  .tt .action { font-weight: 600; }
+
+  .warn {
+    background: #1e1212;
+    border: 1px solid #3d2020;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+  .warn strong { color: #e74c3c; }
+
+  .tip {
+    background: #121e12;
+    border: 1px solid #203d20;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+  .tip strong { color: #2ecc71; }
+
+  .info {
+    background: #12121e;
+    border: 1px solid #20203d;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+  .info strong { color: #3498db; }
+
+  .next-table td:first-child { color: #666; white-space: nowrap; }
+  .next-table td:last-child { color: #aaa; }
+
+  @media (max-width: 600px) {
+    body { padding: 16px 12px; }
+    .pinmap { font-size: 11px; padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>4WD Car Wiring Guide</h1>
+  <p>Phase 1 -- Left-side motors (Channel A only) via TB6612FNG + ESP32</p>
+</header>
+
+<!-- ========== SCHEMATIC ========== -->
+<section>
+  <h2>Schematic</h2>
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 980 545" xmlns="http://www.w3.org/2000/svg" style="width:100%;min-width:700px;height:auto;">
+
+      <!-- ---- ESP32 ---- -->
+      <rect x="20" y="55" width="175" height="380" rx="10" fill="#161628" stroke="#2e2e4a" stroke-width="1.5"/>
+      <text x="107" y="85" text-anchor="middle" fill="#fff" font-size="15" font-weight="700" font-family="system-ui">ESP32</text>
+      <text x="107" y="102" text-anchor="middle" fill="#555" font-size="11" font-family="system-ui">USB or battery powered</text>
+
+      <!-- ESP32 pins (right edge) -->
+      <circle cx="195" cy="145" r="5" fill="#555" stroke="#777" stroke-width="1"/>
+      <text x="185" y="149" text-anchor="end" fill="#888" font-size="11" font-family="monospace">GND</text>
+
+      <circle cx="195" cy="195" r="5" fill="#e67e22"/>
+      <text x="185" y="199" text-anchor="end" fill="#e67e22" font-size="11" font-family="monospace">3V3</text>
+
+      <circle cx="195" cy="250" r="5" fill="#3498db"/>
+      <text x="185" y="254" text-anchor="end" fill="#3498db" font-size="11" font-family="monospace">GPIO 27</text>
+
+      <circle cx="195" cy="305" r="5" fill="#2ecc71"/>
+      <text x="185" y="309" text-anchor="end" fill="#2ecc71" font-size="11" font-family="monospace">GPIO 26</text>
+
+      <circle cx="195" cy="355" r="5" fill="#9b59b6"/>
+      <text x="185" y="359" text-anchor="end" fill="#9b59b6" font-size="11" font-family="monospace">GPIO 14</text>
+
+      <circle cx="195" cy="410" r="5" fill="#d35400"/>
+      <text x="185" y="414" text-anchor="end" fill="#d35400" font-size="11" font-family="monospace">VIN</text>
+
+      <!-- M-F label -->
+      <text x="300" y="46" text-anchor="middle" fill="#444" font-size="11" font-family="system-ui">M-F jumper wires</text>
+      <line x1="235" y1="50" x2="365" y2="50" stroke="#333" stroke-width="1" stroke-dasharray="4,3"/>
+
+      <!-- ---- TB6612FNG ---- -->
+      <rect x="390" y="35" width="195" height="435" rx="10" fill="#161628" stroke="#2e2e4a" stroke-width="1.5"/>
+      <text x="487" y="65" text-anchor="middle" fill="#fff" font-size="15" font-weight="700" font-family="system-ui">TB6612FNG</text>
+      <text x="487" y="82" text-anchor="middle" fill="#555" font-size="11" font-family="system-ui">on breadboard</text>
+
+      <!-- TB6612FNG left pins (control inputs) -->
+      <circle cx="390" cy="125" r="5" fill="#555" stroke="#777" stroke-width="1"/>
+      <text x="400" y="129" fill="#888" font-size="11" font-family="monospace">GND</text>
+
+      <circle cx="390" cy="175" r="5" fill="#e67e22"/>
+      <text x="400" y="179" fill="#e67e22" font-size="11" font-family="monospace">VCC</text>
+
+      <circle cx="390" cy="240" r="5" fill="#3498db"/>
+      <text x="400" y="244" fill="#3498db" font-size="11" font-family="monospace">AIN1</text>
+
+      <circle cx="390" cy="290" r="5" fill="#2ecc71"/>
+      <text x="400" y="294" fill="#2ecc71" font-size="11" font-family="monospace">AIN2</text>
+
+      <circle cx="390" cy="350" r="5" fill="#9b59b6"/>
+      <text x="400" y="354" fill="#9b59b6" font-size="11" font-family="monospace">PWMA</text>
+
+      <!-- unused left pins -->
+      <circle cx="390" cy="400" r="4" fill="#2a2a3a"/>
+      <text x="400" y="404" fill="#333" font-size="10" font-family="monospace">BIN1</text>
+      <circle cx="390" cy="422" r="4" fill="#2a2a3a"/>
+      <text x="400" y="426" fill="#333" font-size="10" font-family="monospace">BIN2</text>
+      <circle cx="390" cy="444" r="4" fill="#2a2a3a"/>
+      <text x="400" y="448" fill="#333" font-size="10" font-family="monospace">PWMB</text>
+
+      <!-- TB6612FNG right pins (outputs + power) -->
+      <circle cx="585" cy="200" r="5" fill="#f1c40f"/>
+      <text x="575" y="204" text-anchor="end" fill="#f1c40f" font-size="11" font-family="monospace">AO1</text>
+
+      <circle cx="585" cy="255" r="5" fill="#95a5a6"/>
+      <text x="575" y="259" text-anchor="end" fill="#95a5a6" font-size="11" font-family="monospace">AO2</text>
+
+      <!-- unused right pins -->
+      <circle cx="585" cy="305" r="4" fill="#2a2a3a"/>
+      <text x="575" y="309" text-anchor="end" fill="#333" font-size="10" font-family="monospace">BO1</text>
+      <circle cx="585" cy="327" r="4" fill="#2a2a3a"/>
+      <text x="575" y="331" text-anchor="end" fill="#333" font-size="10" font-family="monospace">BO2</text>
+
+      <circle cx="585" cy="385" r="5" fill="#e74c3c"/>
+      <text x="575" y="389" text-anchor="end" fill="#e74c3c" font-size="11" font-family="monospace">VM</text>
+
+      <circle cx="585" cy="435" r="5" fill="#555" stroke="#777" stroke-width="1"/>
+      <text x="575" y="439" text-anchor="end" fill="#888" font-size="11" font-family="monospace">GND</text>
+
+      <!-- ---- MOTORS ---- -->
+      <rect x="755" y="95" width="205" height="220" rx="10" fill="#161628" stroke="#2e2e4a" stroke-width="1.5"/>
+      <text x="857" y="124" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="system-ui">Left-Side Motors</text>
+      <text x="857" y="141" text-anchor="middle" fill="#555" font-size="10" font-family="system-ui">anti-parallel splice</text>
+
+      <!-- Wire A detail -->
+      <rect x="770" y="158" width="175" height="40" rx="5" fill="#1a1a10" stroke="#33331a" stroke-width="1"/>
+      <circle cx="755" cy="178" r="5" fill="#f1c40f"/>
+      <text x="780" y="173" fill="#f1c40f" font-size="11" font-weight="600" font-family="monospace">Wire A</text>
+      <text x="780" y="189" fill="#666" font-size="10" font-family="system-ui">Front Red + Rear Black</text>
+
+      <!-- Wire B detail -->
+      <rect x="770" y="208" width="175" height="40" rx="5" fill="#161618" stroke="#28282e" stroke-width="1"/>
+      <circle cx="755" cy="228" r="5" fill="#95a5a6"/>
+      <text x="780" y="223" fill="#95a5a6" font-size="11" font-weight="600" font-family="monospace">Wire B</text>
+      <text x="780" y="239" fill="#666" font-size="10" font-family="system-ui">Rear Red + Front Black</text>
+
+      <!-- direction hint -->
+      <text x="857" y="272" text-anchor="middle" fill="#444" font-size="10" font-family="monospace">AIN1=H AIN2=L -> Both Forward</text>
+      <text x="857" y="286" text-anchor="middle" fill="#444" font-size="10" font-family="monospace">AIN1=L AIN2=H -> Both Backward</text>
+      <text x="857" y="300" text-anchor="middle" fill="#444" font-size="10" font-family="monospace">AIN1=H AIN2=H -> Brake</text>
+
+      <!-- ---- BATTERY ---- -->
+      <rect x="755" y="360" width="205" height="105" rx="10" fill="#161628" stroke="#2e2e4a" stroke-width="1.5"/>
+      <text x="857" y="390" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="system-ui">2x 18650</text>
+      <text x="857" y="407" text-anchor="middle" fill="#555" font-size="10" font-family="system-ui">7.4V nom / 8.4V full</text>
+
+      <circle cx="755" cy="430" r="5" fill="#e74c3c"/>
+      <text x="770" y="434" fill="#e74c3c" font-size="12" font-weight="700" font-family="monospace">+ Red</text>
+
+      <circle cx="755" cy="450" r="5" fill="#555" stroke="#777" stroke-width="1"/>
+      <text x="770" y="454" fill="#888" font-size="12" font-weight="700" font-family="monospace">- Black</text>
+
+      <!-- ---- BUCK CONVERTER ---- -->
+      <rect x="390" y="485" width="140" height="50" rx="8" fill="#1a1612" stroke="#3d3020" stroke-width="1.5"/>
+      <text x="460" y="507" text-anchor="middle" fill="#d35400" font-size="12" font-weight="700" font-family="system-ui">Buck Converter</text>
+      <text x="460" y="522" text-anchor="middle" fill="#665530" font-size="10" font-family="system-ui">8.4V in &rarr; 5V out</text>
+
+      <!-- Buck converter pins -->
+      <circle cx="390" cy="510" r="4" fill="#e74c3c"/>
+      <text x="380" y="514" text-anchor="end" fill="#e74c3c" font-size="9" font-family="monospace">IN+</text>
+      <circle cx="530" cy="505" r="4" fill="#d35400"/>
+      <text x="540" y="509" fill="#d35400" font-size="9" font-family="monospace">OUT+ (5V)</text>
+      <circle cx="530" cy="520" r="4" fill="#555" stroke="#777" stroke-width="1"/>
+      <text x="540" y="524" fill="#888" font-size="9" font-family="monospace">OUT-</text>
+
+      <!-- ======== WIRES ======== -->
+
+      <!-- GND: ESP32 -> TB6612FNG (dark gray) -->
+      <path d="M200,145 C295,145 295,125 385,125" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round"/>
+
+      <!-- 3V3 -> VCC (orange) -->
+      <path d="M200,195 C295,195 295,175 385,175" fill="none" stroke="#e67e22" stroke-width="2.5" stroke-linecap="round"/>
+
+      <!-- GPIO27 -> AIN1 (blue) -->
+      <path d="M200,250 C295,250 295,240 385,240" fill="none" stroke="#3498db" stroke-width="2.5" stroke-linecap="round"/>
+
+      <!-- GPIO26 -> AIN2 (green) -->
+      <path d="M200,305 C295,305 295,290 385,290" fill="none" stroke="#2ecc71" stroke-width="2.5" stroke-linecap="round"/>
+
+      <!-- GPIO14 -> PWMA (purple) -->
+      <path d="M200,355 C295,355 295,350 385,350" fill="none" stroke="#9b59b6" stroke-width="2.5" stroke-linecap="round"/>
+
+      <!-- AO1 -> Motor Wire A (yellow) -->
+      <path d="M590,200 C672,200 672,178 750,178" fill="none" stroke="#f1c40f" stroke-width="2.5" stroke-linecap="round"/>
+
+      <!-- AO2 -> Motor Wire B (gray/white) -->
+      <path d="M590,255 C672,255 672,228 750,228" fill="none" stroke="#95a5a6" stroke-width="2.5" stroke-linecap="round"/>
+
+      <!-- VM -> Battery + (red) -->
+      <path d="M590,385 C672,385 672,430 750,430" fill="none" stroke="#e74c3c" stroke-width="2.5" stroke-linecap="round"/>
+
+      <!-- GND -> Battery - (dark gray) -->
+      <path d="M590,435 C672,435 672,450 750,450" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="6,4"/>
+
+      <!-- Battery + -> Buck IN+ (red, from VM row on breadboard) -->
+      <path d="M590,395 C620,395 620,510 386,510" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-dasharray="5,3"/>
+
+      <!-- Buck OUT+ (5V) -> ESP32 VIN (dark orange) -->
+      <path d="M534,505 C600,505 600,480 300,480 C200,480 200,440 200,410" fill="none" stroke="#d35400" stroke-width="2.5" stroke-linecap="round"/>
+
+      <!-- Buck OUT- -> GND (shares common ground, dashed) -->
+      <path d="M534,520 C580,520 590,480 590,445" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-dasharray="5,3"/>
+
+    </svg>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="ldot" style="background:#555;border:1px solid #888"></span> GND (black wire)</div>
+    <div class="legend-item"><span class="ldot" style="background:#e67e22"></span> 3V3 / VCC (orange)</div>
+    <div class="legend-item"><span class="ldot" style="background:#3498db"></span> GPIO 27 &rarr; AIN1 (blue)</div>
+    <div class="legend-item"><span class="ldot" style="background:#2ecc71"></span> GPIO 26 &rarr; AIN2 (green)</div>
+    <div class="legend-item"><span class="ldot" style="background:#9b59b6"></span> GPIO 14 &rarr; PWMA (purple)</div>
+    <div class="legend-item"><span class="ldot" style="background:#f1c40f"></span> Motor Wire A &rarr; AO1 (yellow)</div>
+    <div class="legend-item"><span class="ldot" style="background:#95a5a6"></span> Motor Wire B &rarr; AO2 (gray/white)</div>
+    <div class="legend-item"><span class="ldot" style="background:#e74c3c"></span> Battery + &rarr; VM (red)</div>
+    <div class="legend-item"><span class="ldot" style="background:#d35400"></span> Buck 5V out &rarr; ESP32 VIN (dark orange)</div>
+  </div>
+</section>
+
+<!-- ========== PHASE 2: CHANNEL B ========== -->
+<section>
+  <h2>Phase 2: Right-Side Motors (Channel B)</h2>
+  <p style="color:#666;font-size:13px;margin-bottom:16px">3 new M-F wires from ESP32 + 2 motor wires into breadboard. Everything else stays as-is.</p>
+
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;min-width:600px;height:auto;">
+
+      <!-- ESP32 -->
+      <rect x="20" y="30" width="175" height="260" rx="10" fill="#161628" stroke="#2e2e4a" stroke-width="1.5"/>
+      <text x="107" y="58" text-anchor="middle" fill="#fff" font-size="15" font-weight="700" font-family="system-ui">ESP32</text>
+      <text x="107" y="75" text-anchor="middle" fill="#555" font-size="10" font-family="system-ui">3 new pins for Channel B</text>
+
+      <circle cx="195" cy="120" r="5" fill="#ecf0f1"/>
+      <text x="185" y="124" text-anchor="end" fill="#ecf0f1" font-size="11" font-family="monospace">GPIO 25</text>
+
+      <circle cx="195" cy="175" r="5" fill="#fdcb6e"/>
+      <text x="185" y="179" text-anchor="end" fill="#fdcb6e" font-size="11" font-family="monospace">GPIO 33</text>
+
+      <circle cx="195" cy="230" r="5" fill="#e17055"/>
+      <text x="185" y="234" text-anchor="end" fill="#e17055" font-size="11" font-family="monospace">GPIO 12</text>
+
+      <!-- TB6612FNG -->
+      <rect x="380" y="20" width="195" height="280" rx="10" fill="#161628" stroke="#2e2e4a" stroke-width="1.5"/>
+      <text x="477" y="48" text-anchor="middle" fill="#fff" font-size="15" font-weight="700" font-family="system-ui">TB6612FNG</text>
+      <text x="477" y="65" text-anchor="middle" fill="#555" font-size="10" font-family="system-ui">Channel B pins</text>
+
+      <!-- Left pins (control) -->
+      <circle cx="380" cy="120" r="5" fill="#ecf0f1"/>
+      <text x="390" y="124" fill="#ecf0f1" font-size="11" font-family="monospace">BIN1</text>
+
+      <circle cx="380" cy="175" r="5" fill="#fdcb6e"/>
+      <text x="390" y="179" fill="#fdcb6e" font-size="11" font-family="monospace">BIN2</text>
+
+      <circle cx="380" cy="235" r="5" fill="#e17055"/>
+      <text x="390" y="239" fill="#e17055" font-size="11" font-family="monospace">PWMB</text>
+
+      <!-- Right pins (outputs) -->
+      <circle cx="575" cy="140" r="5" fill="#00b894"/>
+      <text x="565" y="144" text-anchor="end" fill="#00b894" font-size="11" font-family="monospace">BO1</text>
+
+      <circle cx="575" cy="200" r="5" fill="#555"/>
+      <text x="565" y="204" text-anchor="end" fill="#555" font-size="11" font-family="monospace">BO2</text>
+
+      <!-- Right Motors -->
+      <rect x="700" y="50" width="185" height="250" rx="10" fill="#161628" stroke="#2e2e4a" stroke-width="1.5"/>
+      <text x="792" y="80" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="system-ui">Right-Side Motors</text>
+      <text x="792" y="97" text-anchor="middle" fill="#555" font-size="10" font-family="system-ui">anti-parallel splice</text>
+
+      <rect x="715" y="115" width="155" height="40" rx="5" fill="#0a1a18" stroke="#1a332e" stroke-width="1"/>
+      <circle cx="700" cy="135" r="5" fill="#00b894"/>
+      <text x="725" y="130" fill="#00b894" font-size="11" font-weight="600" font-family="monospace">Wire C</text>
+      <text x="725" y="146" fill="#666" font-size="10" font-family="system-ui">Front Red + Rear Black</text>
+
+      <rect x="715" y="165" width="155" height="40" rx="5" fill="#161618" stroke="#28282e" stroke-width="1"/>
+      <circle cx="700" cy="185" r="5" fill="#555"/>
+      <text x="725" y="180" fill="#555" font-size="11" font-weight="600" font-family="monospace">Wire D</text>
+      <text x="725" y="196" fill="#666" font-size="10" font-family="system-ui">Rear Red + Front Black</text>
+
+      <text x="792" y="230" text-anchor="middle" fill="#444" font-size="10" font-family="monospace">BIN1=H BIN2=L -> Both Forward</text>
+      <text x="792" y="244" text-anchor="middle" fill="#444" font-size="10" font-family="monospace">BIN1=L BIN2=H -> Both Backward</text>
+      <text x="792" y="258" text-anchor="middle" fill="#444" font-size="10" font-family="monospace">BIN1=H BIN2=H -> Brake</text>
+
+      <!-- WIRES: ESP32 -> TB6612FNG -->
+      <path d="M200,120 C290,120 290,120 375,120" fill="none" stroke="#ecf0f1" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M200,175 C290,175 290,175 375,175" fill="none" stroke="#fdcb6e" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M200,230 C290,230 290,235 375,235" fill="none" stroke="#e17055" stroke-width="2.5" stroke-linecap="round"/>
+
+      <!-- WIRES: TB6612FNG -> Motors -->
+      <path d="M580,140 C640,140 640,135 695,135" fill="none" stroke="#00b894" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M580,200 C640,200 640,185 695,185" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round"/>
+
+      <!-- Labels -->
+      <text x="290" y="108" text-anchor="middle" fill="#444" font-size="10" font-family="system-ui">M-F wires</text>
+
+    </svg>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="ldot" style="background:#ecf0f1"></span> GPIO 25 &rarr; BIN1 (white)</div>
+    <div class="legend-item"><span class="ldot" style="background:#fdcb6e"></span> GPIO 33 &rarr; BIN2 (yellow)</div>
+    <div class="legend-item"><span class="ldot" style="background:#e17055"></span> GPIO 12 &rarr; PWMB (coral)</div>
+    <div class="legend-item"><span class="ldot" style="background:#00b894"></span> Motor Wire C &rarr; BO1 (green)</div>
+    <div class="legend-item"><span class="ldot" style="background:#555;border:1px solid #888"></span> Motor Wire D &rarr; BO2 (black)</div>
+  </div>
+
+  <p style="color:#666;font-size:13px;margin:20px 0 12px">ESP32 to TB6612FNG -- 3 new M-F wires</p>
+  <table>
+    <tr><th>Wire</th><th>From (ESP32)</th><th>To (TB6612FNG)</th><th>Purpose</th></tr>
+    <tr>
+      <td><span class="cdot" style="background:#ecf0f1"></span>White</td>
+      <td><code>GPIO 25</code></td>
+      <td><code>BIN1</code></td>
+      <td>Right direction control 1</td>
+    </tr>
+    <tr>
+      <td><span class="cdot" style="background:#fdcb6e"></span>Yellow</td>
+      <td><code>GPIO 33</code></td>
+      <td><code>BIN2</code></td>
+      <td>Right direction control 2</td>
+    </tr>
+    <tr>
+      <td><span class="cdot" style="background:#e17055"></span>Coral</td>
+      <td><code>GPIO 12</code></td>
+      <td><code>PWMB</code></td>
+      <td>Right speed control (PWM)</td>
+    </tr>
+  </table>
+
+  <p style="color:#666;font-size:13px;margin:20px 0 12px">Right-side motors -- splice first, then into breadboard</p>
+  <table>
+    <tr><th>Wire</th><th>From (Motors)</th><th>To (TB6612FNG)</th><th>Purpose</th></tr>
+    <tr>
+      <td><span class="cdot" style="background:#00b894"></span>Wire C</td>
+      <td>Right Front Red + Right Rear Black</td>
+      <td><code>BO1</code></td>
+      <td>Right motor output 1</td>
+    </tr>
+    <tr>
+      <td><span class="cdot" style="background:#555;border:1px solid #888"></span>Wire D</td>
+      <td>Right Rear Red + Right Front Black</td>
+      <td><code>BO2</code></td>
+      <td>Right motor output 2</td>
+    </tr>
+  </table>
+
+  <p style="color:#666;font-size:14px;font-weight:600;margin:24px 0 12px">Wiring Steps (5 steps)</p>
+
+  <div class="step" style="border-color:#e17055">
+    <span class="step-n">1</span>
+    <div>
+      <strong>Splice right-side motors (anti-parallel)</strong><br>
+      Same as left side: twist front-right red + rear-right black together (Wire C).
+      Twist rear-right red + front-right black together (Wire D).
+    </div>
+  </div>
+
+  <div class="step" style="border-color:#ecf0f1">
+    <span class="step-n">2</span>
+    <div>
+      <strong>ESP32 GPIO 25 &rarr; BIN1</strong>
+      <span class="step-wire" style="background:#222;color:#ecf0f1">white M-F wire</span><br>
+      Female on ESP32 GPIO 25, male into breadboard free hole next to BIN1.
+    </div>
+  </div>
+
+  <div class="step" style="border-color:#fdcb6e">
+    <span class="step-n">3</span>
+    <div>
+      <strong>ESP32 GPIO 33 &rarr; BIN2</strong>
+      <span class="step-wire" style="background:#1a1a0a;color:#fdcb6e">yellow M-F wire</span><br>
+      Female on ESP32 GPIO 33, male into breadboard free hole next to BIN2.
+    </div>
+  </div>
+
+  <div class="step" style="border-color:#e17055">
+    <span class="step-n">4</span>
+    <div>
+      <strong>ESP32 GPIO 12 &rarr; PWMB</strong>
+      <span class="step-wire" style="background:#1a120a;color:#e17055">coral M-F wire</span><br>
+      Female on ESP32 GPIO 12, male into breadboard free hole next to PWMB.
+    </div>
+  </div>
+
+  <div class="step" style="border-color:#00b894">
+    <span class="step-n">5</span>
+    <div>
+      <strong>Spliced wires into breadboard</strong><br>
+      Wire C (front red + rear black) &rarr; free hole next to <code>BO1</code>.
+      Wire D (rear red + front black) &rarr; free hole next to <code>BO2</code>.
+    </div>
+  </div>
+
+  <div class="info" style="margin-top:16px">
+    <strong>No extra power or ground wires needed.</strong>
+    Channel B shares VM, VCC, GND, and STBY with Channel A. The 5 connections above are everything.
+  </div>
+
+  <p style="color:#666;font-size:13px;margin:20px 0 12px">Channel B direction control (same logic as Channel A):</p>
+  <table class="tt">
+    <tr><th>BIN1 (GPIO 25)</th><th>BIN2 (GPIO 33)</th><th>PWMB (GPIO 12)</th><th>Result</th></tr>
+    <tr>
+      <td><span class="hi">HIGH</span></td>
+      <td><span class="lo">LOW</span></td>
+      <td><span class="pw">0-255</span></td>
+      <td class="action" style="color:#00b894">Right wheels forward</td>
+    </tr>
+    <tr>
+      <td><span class="lo">LOW</span></td>
+      <td><span class="hi">HIGH</span></td>
+      <td><span class="pw">0-255</span></td>
+      <td class="action" style="color:#ecf0f1">Right wheels backward</td>
+    </tr>
+    <tr>
+      <td><span class="lo">LOW</span></td>
+      <td><span class="lo">LOW</span></td>
+      <td><span class="lo">any</span></td>
+      <td class="action" style="color:#666">Coast</td>
+    </tr>
+    <tr>
+      <td><span class="hi">HIGH</span></td>
+      <td><span class="hi">HIGH</span></td>
+      <td><span class="lo">any</span></td>
+      <td class="action" style="color:#e17055">Brake</td>
+    </tr>
+  </table>
+</section>
+
+<!-- ========== BREADBOARD PIN MAP ========== -->
+<section>
+  <h2>TB6612FNG Breadboard Pin Map</h2>
+  <div class="info">
+    <strong>Pin orientation:</strong> The TBFNG.jpeg photo shows the <em>back</em> of the module.
+    When placed on the breadboard (component side up), left and right are <strong>mirrored</strong>.
+    Flip your module over briefly to confirm which pin is at each position.
+  </div>
+  <div class="pinmap">
+<span class="hint">   Power/Output side (toward breadboard edge)</span>
+   <span class="active">GND</span>   <span class="active">VCC</span>   <span class="active">AO1</span>   <span class="active">AO2</span>   <span class="active" style="color:#00b894">BO2</span>   <span class="active" style="color:#00b894">BO1</span>   <span class="active">VM</span>    <span class="active">GND</span>
+    <span class="active">*</span>     <span class="active">*</span>     <span class="active">*</span>     <span class="active">*</span>     <span class="active" style="color:#00b894">*</span>     <span class="active" style="color:#00b894">*</span>     <span class="active">*</span>      <span class="active">*</span>
+<span class="trench">  ======================== center trench ========================</span>
+    <span class="active">*</span>     <span class="active">*</span>     <span class="active">*</span>     <span class="dim">.</span>     <span class="active" style="color:#ecf0f1">*</span>     <span class="active" style="color:#fdcb6e">*</span>     <span class="active" style="color:#e17055">*</span>      <span class="dim">.</span>
+   <span class="active">PWMA</span>  <span class="active">AIN2</span>  <span class="active">AIN1</span>  <span class="dim">NC</span>    <span class="active" style="color:#ecf0f1">BIN1</span>  <span class="active" style="color:#fdcb6e">BIN2</span>  <span class="active" style="color:#e17055">PWMB</span>   <span class="dim">GND</span>
+<span class="hint">   Control side (toward center of breadboard)</span>
+
+   <span class="active">*</span> = Channel A     <span class="active" style="color:#ecf0f1">*</span> = Channel B (new)     <span class="dim">.</span> = unused</div>
+</section>
+
+<!-- ========== CONNECTION TABLE ========== -->
+<section>
+  <h2>All Connections (12 total)</h2>
+
+  <p style="color:#666;font-size:13px;margin-bottom:12px">ESP32 to TB6612FNG -- all M-F wires (female on ESP32 pin, male into breadboard free hole next to TB6612FNG pin)</p>
+  <table>
+    <tr><th>Wire</th><th>From (ESP32)</th><th>To (TB6612FNG)</th><th>Purpose</th></tr>
+    <tr>
+      <td><span class="cdot" style="background:#555;border:1px solid #888"></span>Black</td>
+      <td><code>GND</code></td>
+      <td><code>GND</code></td>
+      <td>Common ground</td>
+    </tr>
+    <tr>
+      <td><span class="cdot" style="background:#e67e22"></span>Orange</td>
+      <td><code>3V3</code></td>
+      <td><code>VCC</code></td>
+      <td>Logic power (3.3V)</td>
+    </tr>
+    <tr>
+      <td><span class="cdot" style="background:#3498db"></span>Blue</td>
+      <td><code>GPIO 27</code></td>
+      <td><code>AIN1</code></td>
+      <td>Direction control 1</td>
+    </tr>
+    <tr>
+      <td><span class="cdot" style="background:#2ecc71"></span>Green</td>
+      <td><code>GPIO 26</code></td>
+      <td><code>AIN2</code></td>
+      <td>Direction control 2</td>
+    </tr>
+    <tr>
+      <td><span class="cdot" style="background:#9b59b6"></span>Purple</td>
+      <td><code>GPIO 14</code></td>
+      <td><code>PWMA</code></td>
+      <td>Speed control (PWM)</td>
+    </tr>
+  </table>
+
+  <p style="color:#666;font-size:13px;margin:20px 0 12px">Battery to TB6612FNG -- bare wires from battery holder into breadboard</p>
+  <table>
+    <tr><th>Wire</th><th>From (Battery)</th><th>To (TB6612FNG)</th><th>Purpose</th></tr>
+    <tr>
+      <td><span class="cdot" style="background:#e74c3c"></span>Red</td>
+      <td>Battery <code>+</code></td>
+      <td><code>VM</code></td>
+      <td>Motor power (8.4V)</td>
+    </tr>
+    <tr>
+      <td><span class="cdot" style="background:#555;border:1px solid #888"></span>Black</td>
+      <td>Battery <code>-</code></td>
+      <td><code>GND</code></td>
+      <td>Battery ground</td>
+    </tr>
+  </table>
+
+  <p style="color:#d35400;font-size:14px;font-weight:600;margin:20px 0 8px">Buck Converter (LM2596S) -- 4 wires</p>
+  <p style="color:#666;font-size:13px;margin-bottom:6px">The buck converter sits off the breadboard. It has screw terminals on both ends. Each screw terminal has + and - holes.</p>
+
+  <div class="diagram-wrap" style="padding:16px;margin-bottom:16px">
+    <svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:750px;height:auto;">
+      <!-- Breadboard -->
+      <rect x="10" y="20" width="160" height="160" rx="8" fill="#161628" stroke="#2e2e4a" stroke-width="1.5"/>
+      <text x="90" y="50" text-anchor="middle" fill="#fff" font-size="13" font-weight="700" font-family="system-ui">Breadboard</text>
+      <text x="90" y="67" text-anchor="middle" fill="#555" font-size="10" font-family="system-ui">(TB6612FNG on it)</text>
+      <text x="90" y="100" text-anchor="middle" fill="#e74c3c" font-size="11" font-family="monospace">VM row = 8.4V</text>
+      <text x="90" y="130" text-anchor="middle" fill="#888" font-size="11" font-family="monospace">GND row = ground</text>
+      <circle cx="170" cy="97" r="4" fill="#e74c3c"/>
+      <circle cx="170" cy="127" r="4" fill="#555" stroke="#777" stroke-width="1"/>
+
+      <!-- Buck converter -->
+      <rect x="310" y="30" width="180" height="140" rx="8" fill="#1a1612" stroke="#3d3020" stroke-width="1.5"/>
+      <text x="400" y="58" text-anchor="middle" fill="#d35400" font-size="13" font-weight="700" font-family="system-ui">Buck Converter</text>
+      <text x="400" y="75" text-anchor="middle" fill="#665530" font-size="10" font-family="system-ui">LM2596S</text>
+
+      <!-- IN side (right of buck - matching physical layout) -->
+      <text x="470" y="108" fill="#e74c3c" font-size="11" font-family="monospace" font-weight="600">IN+</text>
+      <circle cx="490" cy="112" r="4" fill="#e74c3c"/>
+      <text x="470" y="138" fill="#888" font-size="11" font-family="monospace" font-weight="600">IN-</text>
+      <circle cx="490" cy="132" r="4" fill="#555" stroke="#777" stroke-width="1"/>
+
+      <!-- OUT side (left of buck) -->
+      <text x="320" y="108" fill="#d35400" font-size="11" font-family="monospace" font-weight="600">OUT+</text>
+      <circle cx="310" cy="112" r="4" fill="#d35400"/>
+      <text x="320" y="138" fill="#888" font-size="11" font-family="monospace" font-weight="600">OUT-</text>
+      <circle cx="310" cy="132" r="4" fill="#555" stroke="#777" stroke-width="1"/>
+
+      <!-- Display label -->
+      <rect x="355" y="85" width="55" height="28" rx="3" fill="#111" stroke="#333" stroke-width="1"/>
+      <text x="382" y="103" text-anchor="middle" fill="#2ecc71" font-size="11" font-family="monospace" font-weight="700">5.0</text>
+
+      <!-- ESP32 -->
+      <rect x="610" y="55" width="160" height="90" rx="8" fill="#161628" stroke="#2e2e4a" stroke-width="1.5"/>
+      <text x="690" y="82" text-anchor="middle" fill="#fff" font-size="13" font-weight="700" font-family="system-ui">ESP32</text>
+      <text x="690" y="98" text-anchor="middle" fill="#d35400" font-size="11" font-family="monospace">VIN pin</text>
+      <circle cx="610" cy="95" r="4" fill="#d35400"/>
+      <text x="690" y="128" text-anchor="middle" fill="#888" font-size="11" font-family="monospace">GND already shared</text>
+
+      <!-- WIRE 1: Breadboard VM row -> Buck IN+ (red) -->
+      <path d="M174,97 C250,97 250,112 486,112" fill="none" stroke="#e74c3c" stroke-width="2.5" stroke-linecap="round"/>
+      <text x="330" y="96" text-anchor="middle" fill="#e74c3c" font-size="9" font-family="system-ui" font-weight="600">Wire 1: red</text>
+
+      <!-- WIRE 2: Breadboard GND row -> Buck IN- (black) -->
+      <path d="M174,127 C250,127 250,132 486,132" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round"/>
+      <text x="330" y="152" text-anchor="middle" fill="#888" font-size="9" font-family="system-ui" font-weight="600">Wire 2: black</text>
+
+      <!-- WIRE 3: Buck OUT+ -> ESP32 VIN (dark orange) -->
+      <path d="M306,112 C270,112 270,60 500,60 C560,60 580,95 606,95" fill="none" stroke="#d35400" stroke-width="2.5" stroke-linecap="round"/>
+      <text x="460" y="50" text-anchor="middle" fill="#d35400" font-size="9" font-family="system-ui" font-weight="600">Wire 3: dark orange (M-F)</text>
+
+      <!-- WIRE 4: Buck OUT- -> Breadboard GND (black) -->
+      <path d="M306,132 C270,132 270,175 170,175 C150,175 150,132 170,132" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-dasharray="5,3"/>
+      <text x="220" y="190" text-anchor="middle" fill="#888" font-size="9" font-family="system-ui" font-weight="600">Wire 4: black (back to GND row)</text>
+
+    </svg>
+  </div>
+
+  <table>
+    <tr><th>Wire #</th><th>Color</th><th>From (start)</th><th>To (end)</th><th>Purpose</th></tr>
+    <tr>
+      <td><strong>1</strong></td>
+      <td><span class="cdot" style="background:#e74c3c"></span>Red</td>
+      <td>Breadboard: free hole in <code>VM</code> row (same row as battery +)</td>
+      <td>Buck converter: <code>IN+</code> screw terminal</td>
+      <td>Battery 8.4V into buck converter</td>
+    </tr>
+    <tr>
+      <td><strong>2</strong></td>
+      <td><span class="cdot" style="background:#555;border:1px solid #888"></span>Black</td>
+      <td>Breadboard: free hole in <code>GND</code> row (same row as battery -)</td>
+      <td>Buck converter: <code>IN-</code> screw terminal</td>
+      <td>Ground into buck converter</td>
+    </tr>
+    <tr>
+      <td><strong>3</strong></td>
+      <td><span class="cdot" style="background:#d35400"></span>Dark Orange</td>
+      <td>Buck converter: <code>OUT+</code> screw terminal</td>
+      <td>ESP32: <code>VIN</code> pin (M-F wire, female end on ESP32)</td>
+      <td>Regulated 5V to power ESP32</td>
+    </tr>
+    <tr>
+      <td><strong>4</strong></td>
+      <td><span class="cdot" style="background:#555;border:1px solid #888"></span>Black</td>
+      <td>Buck converter: <code>OUT-</code> screw terminal</td>
+      <td>Breadboard: free hole in <code>GND</code> row</td>
+      <td>Buck output ground back to common GND</td>
+    </tr>
+  </table>
+
+  <p style="color:#666;font-size:13px;margin:20px 0 12px">Motors to TB6612FNG -- spliced wire ends into breadboard</p>
+  <table>
+    <tr><th>Wire</th><th>From (Motors)</th><th>To (TB6612FNG)</th><th>Purpose</th></tr>
+    <tr>
+      <td><span class="cdot" style="background:#f1c40f"></span>Yellow</td>
+      <td>Front Red + Rear Black</td>
+      <td><code>AO1</code></td>
+      <td>Motor output 1</td>
+    </tr>
+    <tr>
+      <td><span class="cdot" style="background:#95a5a6"></span>Gray/White</td>
+      <td>Rear Red + Front Black</td>
+      <td><code>AO2</code></td>
+      <td>Motor output 2</td>
+    </tr>
+  </table>
+</section>
+
+<!-- ========== WIRING ORDER ========== -->
+<section>
+  <h2>Wiring Order</h2>
+  <p style="color:#666;font-size:13px;margin-bottom:14px">Ground first, signals in the middle, power last. Battery switch OFF until all wiring is done.</p>
+
+  <div class="step" style="border-color:#555">
+    <span class="step-n">1</span>
+    <div>
+      <strong>ESP32 GND &rarr; TB6612FNG GND</strong>
+      <span class="step-wire" style="background:#222;color:#aaa">black M-F wire</span><br>
+      Common ground reference. Always wire this first.
+    </div>
+  </div>
+
+  <div class="step" style="border-color:#555">
+    <span class="step-n">2</span>
+    <div>
+      <strong>Battery black (-) &rarr; TB6612FNG GND</strong>
+      <span class="step-wire" style="background:#222;color:#aaa">bare black wire</span><br>
+      Use a different GND pin than step 1. Now ESP32 and battery share a common ground through TB6612FNG.
+    </div>
+  </div>
+
+  <div class="step" style="border-color:#3498db">
+    <span class="step-n">3</span>
+    <div>
+      <strong>ESP32 GPIO 27 &rarr; AIN1</strong>
+      <span class="step-wire" style="background:#162a3a;color:#3498db">blue M-F wire</span><br>
+      Direction control pin 1.
+    </div>
+  </div>
+
+  <div class="step" style="border-color:#2ecc71">
+    <span class="step-n">4</span>
+    <div>
+      <strong>ESP32 GPIO 26 &rarr; AIN2</strong>
+      <span class="step-wire" style="background:#163a1a;color:#2ecc71">green M-F wire</span><br>
+      Direction control pin 2.
+    </div>
+  </div>
+
+  <div class="step" style="border-color:#9b59b6">
+    <span class="step-n">5</span>
+    <div>
+      <strong>ESP32 GPIO 14 &rarr; PWMA</strong>
+      <span class="step-wire" style="background:#241a3a;color:#9b59b6">purple M-F wire</span><br>
+      PWM speed control. 0 = stopped, 255 = full speed.
+    </div>
+  </div>
+
+  <div class="step" style="border-color:#e67e22">
+    <span class="step-n">6</span>
+    <div>
+      <strong>ESP32 3V3 &rarr; TB6612FNG VCC</strong>
+      <span class="step-wire" style="background:#2a1e10;color:#e67e22">orange M-F wire</span><br>
+      Powers the TB6612FNG logic (needs 2.7-5.5V, we give it 3.3V).
+    </div>
+  </div>
+
+  <div class="step" style="border-color:#f1c40f">
+    <span class="step-n">7</span>
+    <div>
+      <strong>Spliced Wire A (Front Red + Rear Black) &rarr; AO1</strong>
+      <span class="step-wire" style="background:#2a2a10;color:#f1c40f">motor wire into breadboard</span><br>
+      Motor output terminal 1. Strip and tin the wire end if it doesn't fit the breadboard hole.
+    </div>
+  </div>
+
+  <div class="step" style="border-color:#95a5a6">
+    <span class="step-n">8</span>
+    <div>
+      <strong>Spliced Wire B (Rear Red + Front Black) &rarr; AO2</strong>
+      <span class="step-wire" style="background:#1e1e22;color:#95a5a6">motor wire into breadboard</span><br>
+      Motor output terminal 2.
+    </div>
+  </div>
+
+  <div class="step" style="border-color:#e74c3c">
+    <span class="step-n">9</span>
+    <div>
+      <strong>Battery red (+) &rarr; TB6612FNG VM</strong>
+      <span class="step-wire" style="background:#2a1212;color:#e74c3c">battery red wire</span><br>
+      Motor power supply. This is live 8.4V.
+    </div>
+  </div>
+
+  <p style="color:#d35400;font-size:14px;font-weight:600;margin:24px 0 12px">Steps 10-13: Battery power for ESP32 (via buck converter)</p>
+  <p style="color:#666;font-size:13px;margin-bottom:14px">Do these AFTER flashing your code via USB. Disconnect USB before connecting VIN.</p>
+
+  <div class="step" style="border-color:#e74c3c">
+    <span class="step-n">10</span>
+    <div>
+      <strong>Breadboard VM row (free hole) &rarr; Buck IN+ screw terminal</strong>
+      <span class="step-wire" style="background:#2a1212;color:#e74c3c">red wire</span><br>
+      Plug male end into a free hole in the same breadboard row where battery + already sits (the VM row).
+      Strip the other end, insert into the IN+ screw terminal, tighten with screwdriver.
+    </div>
+  </div>
+
+  <div class="step" style="border-color:#555">
+    <span class="step-n">11</span>
+    <div>
+      <strong>Breadboard GND row (free hole) &rarr; Buck IN- screw terminal</strong>
+      <span class="step-wire" style="background:#222;color:#aaa">black wire</span><br>
+      Same idea -- tap from the GND row where battery - sits. Strip other end into IN- screw terminal.
+    </div>
+  </div>
+
+  <div class="step" style="border-color:#d35400">
+    <span class="step-n">12</span>
+    <div>
+      <strong>Check display reads 5.0V. If not, adjust potentiometer.</strong><br>
+      Turn on battery. The buck converter display should light up. Turn the blue potentiometer screw with a small screwdriver until display shows <strong>5.0</strong>.
+      Do this BEFORE connecting to ESP32.
+    </div>
+  </div>
+
+  <div class="step" style="border-color:#d35400">
+    <span class="step-n">13</span>
+    <div>
+      <strong>Buck OUT+ &rarr; ESP32 VIN</strong>
+      <span class="step-wire" style="background:#2a1a08;color:#d35400">dark orange M-F wire</span><br>
+      Strip one end into the OUT+ screw terminal. Female end clips onto ESP32 VIN pin.
+      <strong>Buck OUT-</strong> &rarr; breadboard GND row (free hole)
+      <span class="step-wire" style="background:#222;color:#aaa">black wire</span><br>
+      Strip one end into OUT- screw terminal, other end into breadboard GND row.
+      ESP32 should boot and code starts running.
+    </div>
+  </div>
+</section>
+
+<!-- ========== DIRECTION TABLE ========== -->
+<section>
+  <h2>Motor Direction Control</h2>
+  <p style="color:#666;font-size:13px;margin-bottom:12px">Both motors move together (anti-parallel splice). Channel A controls both left-side wheels.</p>
+  <table class="tt">
+    <tr><th>AIN1 (GPIO 27)</th><th>AIN2 (GPIO 26)</th><th>PWMA (GPIO 14)</th><th>Result</th></tr>
+    <tr>
+      <td><span class="hi">HIGH</span></td>
+      <td><span class="lo">LOW</span></td>
+      <td><span class="pw">0-255</span></td>
+      <td class="action" style="color:#f1c40f">Forward at speed</td>
+    </tr>
+    <tr>
+      <td><span class="lo">LOW</span></td>
+      <td><span class="hi">HIGH</span></td>
+      <td><span class="pw">0-255</span></td>
+      <td class="action" style="color:#3498db">Backward at speed</td>
+    </tr>
+    <tr>
+      <td><span class="lo">LOW</span></td>
+      <td><span class="lo">LOW</span></td>
+      <td><span class="lo">any</span></td>
+      <td class="action" style="color:#666">Coast (free-wheel)</td>
+    </tr>
+    <tr>
+      <td><span class="hi">HIGH</span></td>
+      <td><span class="hi">HIGH</span></td>
+      <td><span class="lo">any</span></td>
+      <td class="action" style="color:#e74c3c">Brake (locked stop)</td>
+    </tr>
+  </table>
+</section>
+
+<!-- ========== VOLTAGE REFERENCE ========== -->
+<section>
+  <h2>Voltage Reference (Multimeter Debugging)</h2>
+  <p style="color:#666;font-size:13px;margin-bottom:6px">
+    Battery ON, ESP32 on USB, <strong style="color:#e74c3c">no firmware flashed</strong>.
+    Set multimeter to DC voltage (20V range). Black probe = GND reference unless noted.
+  </p>
+
+  <h3 style="color:#aaa;font-size:14px;margin:20px 0 10px;border:0;padding:0">Power Rails -- confirms wiring is correct</h3>
+  <table>
+    <tr><th>Probe +</th><th>Probe - </th><th>Expected</th><th>If wrong</th></tr>
+    <tr>
+      <td><span class="cdot" style="background:#e74c3c"></span>Battery red wire</td>
+      <td><span class="cdot" style="background:#555;border:1px solid #888"></span>Battery black wire</td>
+      <td><code style="color:#2ecc71">7.4 - 8.4V</code></td>
+      <td>Batteries dead or not in series</td>
+    </tr>
+    <tr>
+      <td><span class="cdot" style="background:#e74c3c"></span>TB6612FNG <code>VM</code> pin</td>
+      <td><span class="cdot" style="background:#555;border:1px solid #888"></span>TB6612FNG <code>GND</code> pin</td>
+      <td><code style="color:#2ecc71">7.4 - 8.4V</code></td>
+      <td>Battery red wire not reaching VM, or GND not connected</td>
+    </tr>
+    <tr>
+      <td><span class="cdot" style="background:#e67e22"></span>TB6612FNG <code>VCC</code> pin</td>
+      <td><span class="cdot" style="background:#555;border:1px solid #888"></span>TB6612FNG <code>GND</code> pin</td>
+      <td><code style="color:#2ecc71">~3.3V</code></td>
+      <td>Orange wire loose, or ESP32 not powered via USB</td>
+    </tr>
+    <tr>
+      <td><span class="cdot" style="background:#e67e22"></span>ESP32 <code>3V3</code> pin</td>
+      <td><span class="cdot" style="background:#555;border:1px solid #888"></span>ESP32 <code>GND</code> pin</td>
+      <td><code style="color:#2ecc71">~3.3V</code></td>
+      <td>ESP32 not powered -- check USB cable</td>
+    </tr>
+  </table>
+
+  <h3 style="color:#aaa;font-size:14px;margin:20px 0 10px;border:0;padding:0">Ground Continuity -- most critical check</h3>
+  <table>
+    <tr><th>Probe +</th><th>Probe - </th><th>Expected</th><th>If wrong</th></tr>
+    <tr>
+      <td><span class="cdot" style="background:#555;border:1px solid #888"></span>ESP32 <code>GND</code> pin</td>
+      <td><span class="cdot" style="background:#555;border:1px solid #888"></span>Battery black (-) wire</td>
+      <td><code style="color:#2ecc71">~0V</code></td>
+      <td style="color:#e74c3c"><strong>Grounds not linked.</strong> Both GND wires must reach TB6612FNG GND pins. This is the #1 failure.</td>
+    </tr>
+  </table>
+
+  <h3 style="color:#aaa;font-size:14px;margin:20px 0 10px;border:0;padding:0">Control Pins -- no firmware running, GPIOs are floating</h3>
+  <table>
+    <tr><th>Probe +</th><th>Probe - (GND)</th><th>Expected</th><th>Why</th></tr>
+    <tr>
+      <td><span class="cdot" style="background:#3498db"></span><code>AIN1</code> (GPIO 27)</td>
+      <td>GND</td>
+      <td><code style="color:#888">~0 - 0.3V</code> (floating)</td>
+      <td>GPIO defaults to INPUT mode at boot. High impedance. Not driving anything.</td>
+    </tr>
+    <tr>
+      <td><span class="cdot" style="background:#2ecc71"></span><code>AIN2</code> (GPIO 26)</td>
+      <td>GND</td>
+      <td><code style="color:#888">~0 - 0.3V</code> (floating)</td>
+      <td>Same -- no firmware setting it to OUTPUT</td>
+    </tr>
+    <tr>
+      <td><span class="cdot" style="background:#9b59b6"></span><code>PWMA</code> (GPIO 14)</td>
+      <td>GND</td>
+      <td><code style="color:#888">~0 - 0.3V</code> (floating)</td>
+      <td>This is the critical one. PWMA = 0 means motor output is disabled regardless of AIN1/AIN2.</td>
+    </tr>
+  </table>
+
+  <h3 style="color:#aaa;font-size:14px;margin:20px 0 10px;border:0;padding:0">Motor Outputs -- should be dead without firmware</h3>
+  <table>
+    <tr><th>Probe +</th><th>Probe -</th><th>Expected</th><th>Why</th></tr>
+    <tr>
+      <td><span class="cdot" style="background:#f1c40f"></span><code>AO1</code></td>
+      <td>GND</td>
+      <td><code style="color:#888">~0V</code></td>
+      <td>No valid control signal, driver outputs off</td>
+    </tr>
+    <tr>
+      <td><span class="cdot" style="background:#95a5a6"></span><code>AO2</code></td>
+      <td>GND</td>
+      <td><code style="color:#888">~0V</code></td>
+      <td>Same</td>
+    </tr>
+    <tr style="background:#1a1210">
+      <td><span class="cdot" style="background:#f1c40f"></span><code>AO1</code></td>
+      <td><span class="cdot" style="background:#95a5a6"></span><code>AO2</code></td>
+      <td><code style="color:#e74c3c;font-weight:700">~0V</code></td>
+      <td><strong>No voltage difference across motor terminals = wheels don't spin.</strong> This is expected without firmware.</td>
+    </tr>
+  </table>
+
+  <div class="warn" style="margin-top:20px">
+    <strong>Why nothing moves:</strong> Without firmware, all ESP32 GPIOs are in INPUT mode (high impedance).
+    AIN1, AIN2, and PWMA are effectively LOW. The TB6612FNG has no instructions to drive the motors.
+    The wiring can be 100% correct and you'll still see nothing until you flash code that sets
+    GPIO 27, 26, 14 to OUTPUT mode and drives them HIGH/LOW with PWM.
+  </div>
+
+  <h3 style="color:#aaa;font-size:14px;margin:20px 0 10px;border:0;padding:0">What voltages change AFTER flashing firmware</h3>
+  <p style="color:#666;font-size:13px;margin-bottom:12px">With test code running: <code>AIN1=HIGH, AIN2=LOW, PWMA=255</code> (full speed forward)</p>
+  <table>
+    <tr><th>Probe +</th><th>Probe -</th><th>Before firmware</th><th>After firmware</th></tr>
+    <tr>
+      <td><span class="cdot" style="background:#3498db"></span><code>AIN1</code></td>
+      <td>GND</td>
+      <td><code style="color:#888">~0V</code></td>
+      <td><code style="color:#2ecc71">~3.3V</code> (HIGH)</td>
+    </tr>
+    <tr>
+      <td><span class="cdot" style="background:#2ecc71"></span><code>AIN2</code></td>
+      <td>GND</td>
+      <td><code style="color:#888">~0V</code></td>
+      <td><code style="color:#888">~0V</code> (LOW)</td>
+    </tr>
+    <tr>
+      <td><span class="cdot" style="background:#9b59b6"></span><code>PWMA</code></td>
+      <td>GND</td>
+      <td><code style="color:#888">~0V</code></td>
+      <td><code style="color:#9b59b6">~3.3V</code> (PWM 255 = always HIGH)</td>
+    </tr>
+    <tr style="background:#1a1a10">
+      <td><span class="cdot" style="background:#f1c40f"></span><code>AO1</code></td>
+      <td><span class="cdot" style="background:#95a5a6"></span><code>AO2</code></td>
+      <td><code style="color:#888">~0V</code></td>
+      <td><code style="color:#f1c40f;font-weight:700">~7.4-8.4V</code> -- motors spin!</td>
+    </tr>
+  </table>
+</section>
+
+<!-- ========== NOTES ========== -->
+<section>
+  <h2>Important Notes</h2>
+
+  <div class="warn">
+    <strong>Double-check ground before power.</strong>
+    If ESP32 GND and battery GND are not connected through the TB6612FNG's common GND, the logic signals will be meaningless and you risk damaging the ESP32.
+  </div>
+
+  <div class="warn">
+    <strong>Battery polarity.</strong>
+    Reversing the battery (red to GND, black to VM) will destroy the TB6612FNG instantly. Verify with a multimeter before connecting step 9.
+  </div>
+
+  <div class="tip">
+    <strong>No STBY pin on this module.</strong>
+    Your TB6612FNG breakout shows NC (no connect) where STBY would be. This means STBY is tied HIGH internally. The driver is always active when powered. No extra wiring needed.
+  </div>
+
+  <div class="tip">
+    <strong>ESP32 power: two modes.</strong>
+    <strong>Dev mode:</strong> ESP32 on USB (for flashing and serial monitor). Disconnect buck converter OUT+ from VIN.
+    <strong>Untethered mode:</strong> Unplug USB, buck converter feeds 5V to VIN. ESP32 runs from battery.
+    Do not connect USB and buck converter VIN simultaneously.
+  </div>
+
+  <div class="warn">
+    <strong>Set buck converter to 5V BEFORE connecting to ESP32.</strong>
+    Most buck converters (LM2596, MP1584) have a potentiometer. Connect battery IN+/IN-, then measure OUT+ with a multimeter. Adjust until it reads 5.0V. Only then connect OUT+ to ESP32 VIN. Sending 8.4V to VIN will fry the onboard regulator.
+  </div>
+
+  <div class="info">
+    <strong>Power chain (battery mode).</strong>
+    Battery 8.4V splits two ways: (1) directly to TB6612FNG VM for motors, (2) through buck converter to 5V, then to ESP32 VIN. ESP32's onboard regulator steps 5V down to 3.3V, which feeds TB6612FNG VCC via the orange wire.
+  </div>
+
+  <div class="info">
+    <strong>No serial monitor in battery mode.</strong>
+    Without USB, you lose debug output. Flash your code while on USB first, verify it works, then switch to battery. The code runs automatically on boot.
+  </div>
+
+  <div class="info">
+    <strong>Spliced motor wires in breadboard.</strong>
+    The spliced wire ends are likely stranded copper. If they don't fit breadboard holes cleanly, strip 5mm, twist tight, and tin with solder. Or crimp a male DuPont pin onto each end.
+  </div>
+</section>
+
+<!-- ========== TEST COMMANDS ========== -->
+<section>
+  <h2>Test Commands</h2>
+  <p style="color:#666;font-size:13px;margin-bottom:12px">Flash and test each side independently before combining.</p>
+
+  <div class="info">
+    <strong>Right-side test (Channel B only):</strong><br>
+    <code style="display:block;margin-top:8px;padding:8px;background:#0d0d1a;border-radius:4px;font-size:13px">
+      arduino-cli compile --fqbn esp32:esp32:esp32 firmware/motor_test_right<br>
+      arduino-cli upload --fqbn esp32:esp32:esp32 -p /dev/cu.usbserial-0001 firmware/motor_test_right<br>
+      arduino-cli monitor -p /dev/cu.usbserial-0001 -b 115200
+    </code>
+  </div>
+
+  <div class="info">
+    <strong>Left-side test (Channel A only):</strong><br>
+    <code style="display:block;margin-top:8px;padding:8px;background:#0d0d1a;border-radius:4px;font-size:13px">
+      arduino-cli compile --fqbn esp32:esp32:esp32 firmware/motor_test<br>
+      arduino-cli upload --fqbn esp32:esp32:esp32 -p /dev/cu.usbserial-0001 firmware/motor_test
+    </code>
+  </div>
+</section>
+
+</body>
+</html>
